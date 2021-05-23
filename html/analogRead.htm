@@ -1,0 +1,105 @@
+<html>
+<head>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<style>
+	body,td,select{font:24px sans-serif;}
+	td{text-align:center;width:90px;height:38px;border:solid 1px gray;border-radius:4px;}
+</style>
+
+<script>
+
+var loaded=true;
+var req="";
+var req2="";
+
+function iniciar(){
+	req="&fields=an_pins,analogRead&mvrms="+sel_pin.value;
+	loadjs();
+	sto=setInterval(loadjs,1000);
+}
+
+function loadjs(){
+  if(loaded){
+	sa=req; if(req2.length>0){ sa=req2; req2=""; }
+	if(sa.length>0){
+		if(sa.startsWith("&")) sa="/js?"+sa.substring(1);
+		client.open('GET',sa,true); client.send();
+		loaded=false;
+	}
+  }
+}
+
+var client=new XMLHttpRequest();
+client.onreadystatechange=function(){
+	if(this.readyState==4){
+		loaded=true;
+		if(this.status==200){
+			if(this.responseText.startsWith("{")){
+				myObj=JSON.parse(this.responseText);
+				if(typeof myObj.an_pins!='undefined'){
+					//console.log(myObj.an_pins);
+					for(i in myObj.an_pins){
+						eval("pin"+i).innerHTML=myObj.an_pins[i];
+					}
+					req="&fields=analogRead&mvrms="+sel_pin.value;
+				}
+				if(typeof myObj.analogRead!='undefined'){
+					//console.log(myObj.analogRead);
+					for(i in myObj.analogRead){
+						v=myObj.analogRead[i]/1024*3.3;
+						eval("v"+i).innerHTML=v.toFixed(2);
+					}
+				}
+				if(typeof myObj.mvrms!='undefined'){
+					ia=myObj.mvrms/1000;
+					vrms.innerHTML=ia.toFixed(3);
+				}
+			}
+		}
+	}
+}
+
+
+</script>
+
+</head>
+
+<body onload="iniciar();">
+
+<div align="center">
+
+<p style="margin:24px 0 20px 0;font-weight:bold;">
+	analogRead
+</p>
+
+<table border="0" cellpadding="4">
+	<tr><td></td><td>gpio</td><td>Volts</td></tr>
+	<tr><td>A0</td><td id="pin0"></td><td id="v0"></td></tr>
+	<tr><td>A1</td><td id="pin1"></td><td id="v1"></td></tr>
+	<tr><td>A2</td><td id="pin2"></td><td id="v2"></td></tr>
+	<tr><td>A3</td><td id="pin3"></td><td id="v3"></td></tr>
+	<tr><td>A4</td><td id="pin4"></td><td id="v4"></td></tr>
+	<tr><td>A5</td><td id="pin5"></td><td id="v5"></td></tr>
+</table>
+
+<p style="margin:24px 0 16px 0;font-weight:bold;">
+	mvrms
+</p>
+
+<select id="sel_pin" style="width:60px;text-align-last:center;">
+	<option selected>A0</option>
+	<option>A1</option>
+	<option>A2</option>
+	<option>A3</option>
+	<option>A4</option>
+	<option>A5</option>
+</select>
+
+<div style="margin:15px 0 0 0;">
+	<label id="vrms">0.000</label> Vrms
+</div>
+
+</div>
+
+</body>
+</html>

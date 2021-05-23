@@ -1,0 +1,209 @@
+<html>
+<head>
+  <meta name='viewport' content='width=device-width, initial-scale=0.76'>
+  <style>
+    select{height:38px;font:20px Arial;background:black;color:gray;border:solid 1px #333333;border-radius:8px;padding:0 10px 0 10px;margin:4px 0 4px 0;vertical-align:middle;}
+	.btn_chn{width:58px;height:30px;border-radius:30px;background:black;color:gray;border:solid 1px #333333;vertical-align:middle;margin:5px;font:bold 18px Arial;}
+  </style>
+  <script>
+	var vref=3.3; // 3.3 ou 5
+	var t_chn=1; // 1 a 6
+	var D_map=[];
+  </script>
+</head>
+
+<body style="margin:6px;background:black;color:gray;" onload="iniciar();">
+
+<canvas id="layer0" style="width:456;height:274;margin:0;border:none;background-color:black;"></canvas>
+<script>
+for(i=1;i<=t_chn;i++) document.writeln('<canvas id="layer'+i+'" style="margin:0;position: absolute; z-index:'+i+';border:none;"></canvas>');
+var g_cor=["#404040","#FF0000","#00FF00","#0000FF","#FFFF00","#FF00FF","#00FFFF"];
+var g_wid=456;var g_hei=274;var g_top=6, g_left=6;var ctx=[];
+var v_sinc=511;
+var loaded=true;
+var ser="";
+var w_size=228;
+var chns=[0];
+
+for(i=0;i<=t_chn;i++){
+  la=eval("layer"+i); la.width=g_wid+1; la.height=g_hei+1;
+  if(i>0){ la.style.top=g_top; la.style.left=g_left; }
+  var c=document.getElementById("layer"+i);
+  ctx[i]=c.getContext("2d"); ctx[i].strokeStyle =g_cor[i]; ctx[i].fillStyle =g_cor[i];
+}
+</script>
+
+<div align="center" style="width:454px;border:solid 1px #333333;margin:6px 0 3px 0;border-radius:4px;">
+  
+  <div style="margin:4px;">
+	<script>
+	if(t_chn>1){
+		for(i=0;i<t_chn;i++){ia=i+1;document.writeln('<input id="btn_chn'+i+'" type="button" class="btn_chn" value="'+ia+'" onclick="btn_chn_oc('+i+');">');}
+		for(i=0;i<t_chn;i++){ eval("btn_chn"+i).style.borderColor=g_cor[i+1]; eval("btn_chn"+i).style.color="gray"; }
+		document.writeln('<br>');
+	}
+	
+	function btn_chn_oc(xx){
+		obj=eval("btn_chn"+xx); if(obj.style.color!='gray'){obj.style.color='gray';}else{obj.style.color=g_cor[xx+1];}
+		chns=[]; for(i=0;i<t_chn;i++){obj=eval("btn_chn"+i);if(obj.style.color!='gray'){ chns[chns.length]=i; }	}
+		localStorage.setItem('chns', chns); g_clear();
+		loaded=1;
+	}
+	</script>
+
+	
+	
+	<select id="v_sinc2" onchange="localStorage.setItem('v_sinc2', this.value); v_sinc=Math.floor(parseFloat(v_sinc2.value)/"+vref+"*1024);">
+		<script>for(i=0;i<vref;i+=0.05){sa=i; sa+='';document.writeln('<option value="'+i.toFixed(2)+'">'+i.toFixed(2)+'V</option>');}</script>
+	</select>
+
+	<select id="tr_port" onchange="localStorage.setItem('tr_port', this.value);tr_port.style.color=g_cor[tr_port.selectedIndex+1];">
+		<script>for(i=0;i<t_chn;i++){ia=i+1;document.writeln('<option value="'+i+'">CH '+ia+'</option>');}</script>
+	</select>
+	<script>for(i=0;i<tr_port.length;i++) tr_port.options[i].style.color=g_cor[i+1];
+	  if(t_chn<2){ tr_port.style.position="absolute"; tr_port.style.left="-100"; }
+	</script>
+
+    <select id="tr_mode" onchange="localStorage.setItem('tr_mode', this.value);">
+      <option value="1">Rising</option><option value="0">Falling</option>
+    </select>
+
+    <select id="v_us" onchange="localStorage.setItem('v_us', this.value);g_clear();" style="padding:4px 20px 4px 10px;">
+      <option value="132">3.0 ms/div</option><option value="219" selected>5.0 ms/div</option><option value="439">10 ms/div</option><option value="877">20 ms/div</option>
+    </select>
+
+<style>.btndp{color:blue;padding:0 10px 0 10px;font:16px Arial;height:38px;vertical-align:bottom;border:solid 1px #333333;border-radius:8px;background:black;color:blue;vertical-align:middle;}</style>
+<script>
+  if(t_chn>1) document.writeln('<input id="dividir" class="btndp" type="button" value="Dividir" onclick="div_onclick()">');
+  function div_onclick(){
+    if(dividir.style.color=='red'){dividir.style.color='blue';}else{dividir.style.color='red';}
+    localStorage.setItem('dividir', dividir.style.color); g_clear();} </script>
+
+<input id="parar" class="btndp" type="button" value="Pausar" style="color:blue;" onclick="if(parar.style.color=='red'){parar.style.color='blue';}else{parar.style.color='red';}">
+
+  </div>
+
+</div>
+
+<div align="center" id="div01" style="width:454px;"></div>
+
+<div align="center" style="width:454px;color:#333333;margin:2px 0 0 0;">ESP8266</div>
+
+<script>
+
+function iniciar(){
+	ia=vref/2; v_sinc2.value=ia.toFixed(2);
+	if(localStorage.getItem('v_us')){v_us.value=localStorage.getItem('v_us');}	
+	if(localStorage.getItem('tr_mode')){tr_mode.value=localStorage.getItem('tr_mode');}
+	if(localStorage.getItem('tr_port')){tr_port.value=localStorage.getItem('tr_port');} tr_port.style.color=g_cor[tr_port.selectedIndex+1];
+	if(localStorage.getItem('chns')){chns=localStorage.getItem('chns').split(","); if(chns.length>t_chn){ chns=[0]; } }
+	if(t_chn>1){for(i in chns){ia=chns[i]; ia++;eval("btn_chn"+chns[i]).style.color=g_cor[ia]; } }
+	if(localStorage.getItem('v_sinc2')){v_sinc2.value=localStorage.getItem('v_sinc2');}
+	v_sinc=Math.floor(parseFloat(v_sinc2.value)/3.3*1024);
+	if(t_chn>1) if(localStorage.getItem('dividir')){dividir.style.color=localStorage.getItem('dividir');}
+	//
+	if(v_us.selectedIndex<0) v_us.selectedIndex=0;
+	
+	//
+	grade();
+	sto=setInterval(loadjs,500)
+}
+
+var chn=0;
+
+function loadjs(){
+  if(loaded==1){
+    if(chn>=chns.length) chn=0;
+    sa=ser; ser="";
+    if(chns.length>0 && parar.style.color!='red') sa+="&w="+chns[chn]+","+v_sinc+","+v_us.value+","+w_size+","+tr_port.value+","+tr_mode.value;
+    sa+="&fields=tem2";
+    if(D_map.length>0){sa+="&dr="; sa+=D_map;}
+    sa=sa.substring(1);
+	if(sa.length>0){
+		client.open('GET',"/js?"+sa,true); client.send();
+		loaded=0;
+	}
+    
+  }
+}
+
+var div_h=0;
+
+var client=new XMLHttpRequest();
+client.onreadystatechange=function(){
+	if(this.readyState==4){
+		if (this.status==200){
+			myObj=JSON.parse(this.responseText);
+			if(typeof myObj.w!='undefined'){
+			  var p_y=0; var p_x=0;
+			  ctxn=chns[chn]; ctxn++;
+			  if(ctxn>0) ctx[ctxn].clearRect(0, 0,g_wid, g_hei);
+			  ctx[ctxn].beginPath();
+			  for(i in myObj.w){
+			    x=Math.floor(g_hei-1-(myObj.w[i]/1023)*(g_hei-1)); 
+				if(div_h==1){ x=Math.floor(g_hei-1-((g_hei-1)/chns.length*chn)-(myObj.w[i]/1023)*(g_hei-2)/chns.length); }
+				if(x<0) x=0;
+			    y=i*2; if(i>0){ ctx[ctxn].moveTo(p_y, p_x ); ctx[ctxn].lineTo(y, x ); }
+			    p_y=y;p_x=x;
+			  }
+			  ctx[ctxn].stroke();
+			  chn++;
+			}
+		}
+    loaded=1;
+	}
+}
+
+function g_clear(){
+  for(i=1;i<ctx.length;i++){ctx[i].clearRect(0, 0,g_wid, g_hei);}
+  grade();
+}
+
+function grade(){
+	div_h=0; if(t_chn>1) if(dividir.style.color=='red') div_h=1;
+	ctx[0].clearRect(0, 0,g_wid, g_hei);
+  
+	ctx[0].fillStyle="#333333";	ctx[0].font="34px Verdana";
+	
+	sa=v_us.options[v_us.selectedIndex].innerHTML;ctx[0].textAlign = "left"; ctx[0].fillText(sa, 10, 38);
+	sa="0.5 V/div"; if(vref==5){ sa="1.0 V/div"; } ctx[0].textAlign = "right"; ctx[0].fillText(sa, g_wid-10, 38);
+  
+	if(div_h==1) ia=chns.length; else ia=1;
+
+	if(vref==50){
+		for(i=0;i<=(5*ia);i+=1){
+		  x=Math.floor((1-i/(5*ia))*g_hei); if(x<0) x=0;
+		  ctx[0].fillStyle="#333333"; ctx[0].fillRect(0,x,g_wid,1);
+		}
+	}
+
+	ctx[0].fillStyle="#666666"; ctx[0].fillRect(0,0,g_wid,1);
+	for(i=1;i<=ia;i++){
+		x0=g_hei/ia*i;
+		ctx[0].fillStyle="#666666";	ctx[0].fillRect(0,Math.floor(x0),g_wid,1);
+		if(vref==3.3){
+			for(j=3;j>=0.5;j-=0.5){
+				x=(g_hei/ia/3.3)*j;
+				ctx[0].fillStyle="#333333"; ctx[0].fillRect(0,Math.floor(x0-x),g_wid,1);
+			}
+		}
+		if(vref==5){
+			for(j=1;j<5;j++){
+				x=Math.floor( (g_hei/ia/5)*j );
+				ctx[0].fillStyle="#333333"; ctx[0].fillRect(0,Math.floor(x0-x),g_wid,1);
+			}
+		}
+	}
+
+  ctx[0].fillStyle ="#333333";
+  for(i=1;i<=9;i++){y=Math.floor(i*45.6); ctx[0].fillRect(y,1,1,g_hei-2);}
+  ctx[0].fillStyle ="#666666";
+  ctx[0].fillRect(0,0,1,g_hei);
+  ctx[0].fillRect(g_wid-1,0,1,g_hei);
+  
+}
+
+</script>
+
+</body>
+</html>

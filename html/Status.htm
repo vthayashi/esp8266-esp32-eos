@@ -1,0 +1,230 @@
+<html>
+
+<head>
+
+<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+
+<!--base href="http://192.168.0.129/"><!---->
+
+<style>
+	body,td{font:30px sans-serif;background:black;color:silver;}
+    hr{border:none; border-top: 1px dashed #333333;margin:0;}
+</style>
+
+</head>
+
+<body onload="iniciar();">
+
+<script>
+dbcw=document.documentElement.clientWidth || window.innerWidth || document.body.clientWidth;
+dbch=document.documentElement.clientHeight || window.innerHeight || document.body.clientHeight;
+zw=Math.floor(dbcw/600*100); zh=Math.floor(dbch/900*100);
+zoom=(zw<zh)?zw:zh;	document.body.style.zoom=zoom+"%";
+</script>
+
+<div align=center>
+
+<table cellspacing=6>
+<tr><td colspan=2 style="text-align:center;">Status</td></tr>
+<tr><td colspan=2><hr></td></tr>
+<tr><td width=260>DeviceID</td><td width=400 id=DeviceID></td></tr>
+<tr><td>Versao</td><td id=Versao></td></tr>
+<tr><td colspan=2><hr></td></tr>
+<tr><td>essid</td><td id=essid></td></tr>
+<tr><td>localIP</td><td id=localIP></td></tr>
+<tr><td>wifi_rssi</td><td id=wifi_rssi></td></tr>
+
+<tr><td colspan=2><hr></td></tr>
+<tr><td>MQTT Broker</td><td id=MQTT_BROKER></td></tr>
+<tr><td>MQTT ID</td><td id=MQTT_ID></td></tr>
+<tr><td>MQTT Status</td><td id=mqtt_status></td></tr>
+<tr><td colspan=2><hr></td></tr>
+<tr><td>datahora</td><td id=datahora></td></tr>
+<tr><td>millis</td><td id=millis></td></tr>
+<tr><td>max_loop_wdt</td><td id=max_loop_wdt_cnt></td></tr>
+<tr><td colspan=2><hr></td></tr>
+<tr><td>minFreeHeap</td><td id=minFreeHeap></td></tr>
+<tr><td>FreeHeap</td><td id=FreeHeap></td></tr>
+<tr><td colspan=2><hr></td></tr>
+<tr><td>FS usedBytes</td><td id=fs_usedBytes></td></tr>
+<tr><td>FS totalBytes</td><td id=fs_totalBytes></td></tr>
+<tr><td>FS Files</td><td id=fs_files></td></tr>
+<tr><td colspan=2><hr></td></tr>
+<tr><td>ResetReason</td><td id=ResetReason></td></tr>
+<tr><td colspan=2><hr></td></tr>
+
+</table>
+
+<pre id="pre_log" style="width:596px;margin:2px;color:gray;">&nbsp;</pre>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
+
+<script>
+
+	//
+var loaded=0;
+var req="";
+var req2="";
+
+var broker="";
+var subID='';
+
+aa=location.search.substring(1).split("&");
+for(i in aa){
+	aa[i]=aa[i].split("=");
+	if(aa[i][0]=="broker") { broker=aa[i][1]; }
+	if(aa[i][0]=="subID"){ subID=aa[i][1]; }
+}
+
+function iniciar(){
+	req="&fields=DeviceID,Versao,time,millis,max_loop_wdt_cnt,FreeHeap,minFreeHeap,fs_usedBytes,fs_totalBytes,essid,localIP,MQTT_BROKER,MQTT_ID,mqtt_status,wifi_rssi,list,ResetReason";
+	if(broker=="" || subID==""){
+		js_init(); console.log("js_init()");
+	}else{
+		mqtt_init();
+	}
+}
+
+var client;
+
+///
+
+function js_init(){
+	client=new XMLHttpRequest();
+	client.onreadystatechange=function(){
+		if(this.readyState==4){
+			loaded=0;
+			if(this.status==200){
+				if(this.responseText.startsWith("{")){
+					myObj=JSON.parse(this.responseText);
+					js_fun(JSON.parse(this.responseText));
+				}
+			}
+		}
+	}
+	loadjs(); sto=setInterval(loadjs,1000);
+}
+
+function loadjs(){
+  if(loaded==0){
+	sa=req; if(req2.length>0){ sa=req2; req2=0; }
+	if(sa.length>0){
+		if(sa.startsWith("&")) sa="/js?"+sa.substring(1);
+		client.open('GET',sa,true); client.send();
+		loaded=1;
+	}
+  }
+}
+
+///
+
+function js_fun(myObj){
+	if(typeof myObj.DeviceID!='undefined'){ req=""; DeviceID.innerHTML=myObj.DeviceID; }
+	if(typeof myObj.Versao!='undefined'){ Versao.innerHTML=myObj.Versao; }
+	if(typeof myObj.millis!='undefined'){ millis.innerHTML=myObj.millis; }
+	if(typeof myObj.time!='undefined'){
+		time=myObj.time;
+		var d=new Date(time*1000); se=d.toISOString(); sf=se.substring(0,se.indexOf('T'));
+		se=se.substring(se.indexOf('T')+1); se=se.substring(0,se.indexOf('.'));
+		datahora.innerHTML=sf+' '+se;
+	}//
+	if(typeof myObj.millis!='undefined'){
+		d=new Date(myObj.millis); sa=d.toISOString();
+		sa=sa.substring(0,sa.indexOf(".")); sa=sa.replace("T","-"); sa=sa.split("-");
+		millis.innerHTML=(parseInt(sa[2])-1)+":"+sa[3];
+	}
+	if(typeof myObj.max_loop_wdt_cnt!='undefined'){ max_loop_wdt_cnt.innerHTML=(myObj.max_loop_wdt_cnt*50)+" ms"; }
+	if(typeof myObj.FreeHeap!='undefined'){ FreeHeap.innerHTML=myObj.FreeHeap; }
+	if(typeof myObj.minFreeHeap!='undefined'){ minFreeHeap.innerHTML=myObj.minFreeHeap; }
+	if(typeof myObj.fs_usedBytes!='undefined'){ fs_usedBytes.innerHTML=(myObj.fs_usedBytes/1000).toFixed(0)+" KB"; }
+	if(typeof myObj.fs_totalBytes!='undefined'){ fs_totalBytes.innerHTML=(myObj.fs_totalBytes/1000).toFixed(0)+" KB"; }
+	if(typeof myObj.essid!='undefined'){ essid.innerHTML=myObj.essid; }
+	if(typeof myObj.localIP!='undefined'){ localIP.innerHTML=myObj.localIP; }
+	if(typeof myObj.MQTT_BROKER!='undefined'){ MQTT_BROKER.innerHTML=myObj.MQTT_BROKER; }
+	if(typeof myObj.MQTT_ID!='undefined'){ MQTT_ID.innerHTML=myObj.MQTT_ID; }
+	if(typeof myObj.mqtt_status!='undefined'){ mqtt_status.innerHTML=myObj.mqtt_status; }
+	if(typeof myObj.wifi_rssi!='undefined'){ wifi_rssi.innerHTML=myObj.wifi_rssi; }
+	//
+	if(typeof myObj.list!='undefined'){ fs_files.innerHTML=myObj.list.length; }
+	if(typeof myObj.ResetReason!='undefined'){ ResetReason.innerHTML=myObj.ResetReason; }
+}
+
+//
+
+//if(broker!="" && subID!=""){ document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"><'+'/script>'); }
+
+var clientID="clientID_" + parseInt(Math.random() * 10000);
+var port = 8000;
+var mqtt_connected=false;
+
+function mqtt_init(){
+	client = new Paho.MQTT.Client(broker, port, clientID);
+	client.onConnectionLost = onConnectionLost;
+	client.onMessageArrived = onMessageArrived;
+	var options={
+		timeout:3,
+		useSSL:false, //true=Use-websockets SSL
+		onSuccess:onConnect,
+		onFailure: onFailure
+	};
+	client.connect(options);
+	sto=setInterval(loadmqtt,1000);
+}
+
+function loadmqtt(){
+	if(mqtt_connected){
+		if(loaded==0){
+			sa=req; if(req2.length>0){ sa=req2; req2=""; }
+			if(sa.length>0){
+				console.log(sa);
+				message = new Paho.MQTT.Message(sa);
+				message.destinationName = subID+"/sub";
+				client.send(message);
+				loaded=1;
+			}
+		}else{
+			loaded++; if(loaded>10) loaded=0;
+		}
+	}
+}
+
+function onConnect() {
+	pre_log.innerHTML+="MQTT connected";
+	mqtt_connected=true;
+	client.subscribe(subID+"/pub");
+}
+
+function onFailure(){
+	pre_log.innerHTML+="MQTT connection failed";
+}
+
+function onConnectionLost(responseObject) {
+	if (responseObject.errorCode !== 0) {
+		mqtt_connected=false;
+		console.log("onConnectionLost:"+responseObject.errorMessage);
+		pre_log.innerHTML="MQTT connection lost";
+	}
+}
+
+function onMessageArrived(message) {
+	name=message.destinationName;
+	text=message.payloadString;
+	if(name==subID+"/pub"){
+		if(text.substring(0,text.indexOf(" "))==req ){
+			loaded=0;
+			text=text.substring(text.indexOf(" ")+1);
+			console.log(name+" "+text);
+			//js_fun(JSON.parse(text));
+			if(text.startsWith("{")){ js_fun(JSON.parse(text)); }
+		}
+	}
+}
+
+</script>
+
+</body>
+
+</html>

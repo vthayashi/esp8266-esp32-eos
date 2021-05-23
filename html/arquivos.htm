@@ -1,0 +1,145 @@
+
+<html>
+<head>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<script>
+
+ function iniciar(){
+  ia=document.body.clientWidth; ib=document.body.clientHeight*0.85;
+  if(ia<ib){ia=ia/360; ia*=100; sa=ia.toFixed(0)+"%"; document.body.style.zoom = sa;}
+  wait_text.innerHTML+="<br>Carregando Lista...";
+  loadList();
+ }
+ 
+ function loadList(){
+	xh.open("GET", "/list?dir=/", true); xh.send(null);
+ };
+ 
+var xh = new XMLHttpRequest();
+xh.onreadystatechange = function(){
+  if (xh.readyState == 4){
+    if(xh.status == 200) {
+    var res = JSON.parse(xh.responseText);
+    aa=[];for(i in res){
+		if(res[i].name!=""){
+			aa[i]=res[i].name+" ";
+			if(typeof res[i].size!='undefined') aa[i]+=res[i].size;
+		}
+    }
+    aa.sort();
+    pg="<table>";
+    //div01.innerHTML='';
+    for(i in aa){
+      sa=aa[i]; //console.log(sa);
+      sb=sa.substring(0,sa.indexOf(" "));
+      pg+='<tr><td><input type=button value=del onclick=del("'+sb+'"); ></td>';
+      sb=sb.replace('.gz','');
+      pg+="<td><a href='"+sb+"'>"+sb+"</a></td>";
+      sc=sa.substring(sa.indexOf(" ")+1);
+      if(sc.length>0) pg+="<td align=right>"+sc+" Bytes</td>";
+      pg+="</tr>";
+    }
+    pg+="</table>";
+    div01.innerHTML=pg;
+    sto=setTimeout(load3(),100);
+   }else{
+     sto=setTimeout(loadList(),500);
+   }
+  }
+ };
+ 
+var xh2 = new XMLHttpRequest();
+xh2.onreadystatechange = function(){
+  if (xh2.readyState == 4){
+      if(xh2.status == 200) {setTimeout(loadList(),100);}
+  }
+};
+
+function load3(){
+	wait_text.innerHTML+="<br>Carregando Status..."; wait.style.visibility="visible";
+	sa="/json?fields=fs_usedBytes,fs_totalBytes";
+	xh3.open("GET", sa, true);
+	xh3.send(null);
+} 
+var xh3 = new XMLHttpRequest();
+xh3.onreadystatechange = function(){
+	if (this.readyState == 4){
+		wait.style.visibility="hidden"; wait_text.innerHTML="wait";
+      if(this.status == 200) {
+        myObj=JSON.parse(this.responseText);
+        if(typeof myObj.fs_usedBytes!='undefined'){sa=myObj.fs_usedBytes; sa/=1000; info.innerHTML=sa.toFixed(0)+"/";}
+        if(typeof myObj.fs_totalBytes!='undefined'){sa=myObj.fs_totalBytes; sa/=1000; info.innerHTML+=sa.toFixed(0)+" KBytes";}
+      }else{
+        setTimeout(load3,100);
+      }
+  }
+};
+
+
+
+function del(path){
+  if(confirm('Excluir '+path+'?')==true){
+    xh2.open('DELETE', '/edit?path=/'+path, true); xh2.send(null);
+  }
+}
+
+function updateChange(){
+ sb=update.value;
+ if(sb.length<1){submitBtn.disabled=true;}else{submitBtn.disabled=false;}
+}
+</script>
+
+<style>
+ body{margin:4px 0 0 0;background-color:black;color:white;}
+ input{border:solid 1px gray;border-radius:4px;background-color:white;cursor:hand;color:gray;}
+ .custom-file-input{width:238px;}
+ .custom-file-input::-webkit-file-upload-button {visibility:hidden;width:0;}
+ a{text-decoration:none;}
+ a:link{color:silver;}
+ a:visited{color:silver;}
+ a:hover {color: hotpink;}
+</style>
+
+</head>
+
+<body>
+
+<table id="wait" style="position:absolute;width:100%;height:100%;color:red;background:black;visibility:visible;">
+	<tr><td height=50% align=center id="wait_text">wait</td></tr>
+	<tr><td height=50% align=center></td></tr>
+	</table>
+
+<div align='center'>
+
+<!--table width=350 border='0' cellspacing='0' cellpadding='2' style="border:solid 1px gray;border-radius:6px;"><tr>
+<td width=15% align=left style="height:24px;"><input type=button value="<" style="height:23px;min-width:42px;background:black;color:silver;" onclick="history.go(-1);"></td>
+<td width="85%" id="datahora" title="Send Time" onclick="sendTime();" style="height:24px;text-align:center;cursor:pointer;font:20px arial;">Config</td>
+</tr></table-->
+    
+  
+  
+<table width=350 border='0' cellspacing='0' cellpadding='2' style="border:solid 1px gray;border-radius:6px;"><tr>
+<form target='if01' action='/edit' method='post' enctype='multipart/form-data'>
+  <td><input type=button value=" < " style="height:23px;width:42px;background:black;color:silver;" onclick="history.go(-1);"></td>
+<td><input id='update' type='file' name='name' class='custom-file-input' onchange='updateChange()'></td>
+<td><input id='submitBtn' type='submit' value='Upload' disabled style='height:23px;width:58px;' onclick="on_submit();"></td>
+</form>
+</tr></table>
+<script>
+	function on_submit(){
+		wait_text.innerHTML="Enviando arquivo..."; wait.style.visibility="visible";
+	}
+</script>
+
+<div style='width:348px;margin:2px;border:solid 1px gray;border-radius:6px;'>
+<table><tr><td id='div01'>
+</td></tr></table>
+
+</div>
+
+<div id="info"></div>
+
+
+<iframe id='if01' name='if01' onload='iniciar();' style='visibility:hidden;'></iframe>
+
+</body></html>

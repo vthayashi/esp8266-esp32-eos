@@ -1,0 +1,115 @@
+<!-- log2.htm v1.0.1 210411 -->
+
+<html><head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body{margin:0;}
+  body,html,input,select{font:14px Verdana;}
+ .divbl{border-style:solid;border-radius:8px;margin-bottom:8px;padding:6px;border-color:#e1e1e1}
+ input{border-radius:4px;border:solid 1px silver;padding:4px;}
+ select{width:296px;padding:2px 2px 2px 40px;border:solid 1px #e1e1e1;border-radius:4px;font:16px Verdana;}
+</style>
+</head>
+<body onload=iniciar()>
+<div style='width:100%' align='center'>
+ 
+<table border='0' cellspacing='0' cellpadding='2' style="border:solid 1px silver;border-radius:6px;">
+<tr>
+	<td ><input type=button value='<' onclick='history.go(-1);' style="width:40px;"></td>
+	<td><select id='sel01' onchange='req=sel01.value;load_log();'></select></td>
+</tr>
+<tr><td colspan=2 style="text-align:center;">
+	<form onsubmit="filtrar(); return false;" style="margin:0;">
+		<input type='text' id='filtro' name='filtro' style='width:230px;text-align:center;'>
+		<input type="submit" value='Filtrar' style="width:60px;">
+		<input type=button value='C' onclick='filtro.value="";filtrar();' style="width:40px;">
+	</form>
+</td></tr>
+</table>
+		
+<table><tr><td id='div01' style='font:12px monospace;'></td></tr></table>
+
+</div>
+
+<script>
+
+ var req="/list?dir=/log";
+ var dir=[];
+ 
+ var client=new XMLHttpRequest();
+ var sto;
+ client.onreadystatechange=function(){
+   if(this.readyState==4){
+     if(this.status==200){
+	 if(req.indexOf("dir=")>0){
+		aa=JSON.parse(this.responseText); //dir.sort();
+		//pg="<select id='sel01' onchange='req=sel01.value;load_log();'>";
+		dir=[];
+		for(i in aa){
+			dir[i]=[];
+			dir[i][0]=aa[i].name;
+			if(typeof aa[i].size!='undefined') dir[i][1]=aa[i].size;
+		}
+		dir.sort();
+		pg="";
+		for(i in dir){
+			//sa=dir[i].name; sa="20"+sa.substring(4,6)+"-"+sa.substring(6,8)+"-"+sa.substring(8,10);
+			sa=dir[i][0];
+			if(sa.indexOf("log/")>=0){
+				sa=sa.substring(8,10)+"-"+sa.substring(6,8)+"-20"+sa.substring(4,6);
+				if(typeof dir[i][1]!='undefined'){ ia=dir[i][1]; ia++; ia--; ia/=1000; sa+=" ("+ia.toFixed(2)+"KB)"; }
+				pg+="<option value='"+dir[i][0]+"'>"+sa+"</option>";
+			}
+		}
+		//div00.innerHTML=pg+"</select>";
+		sel01.innerHTML=pg;
+		sel01.selectedIndex=sel01.length-1;
+		req=sel01.value;load_log();
+		
+	 }else{
+		arq=this.responseText;
+		arq=arq.split("\n").join("\r");
+		arq=arq.split("\r\r").join("\r");
+		filtrar();
+	  }
+     }
+   }
+ }
+ 
+ function load_log(){client.open('GET',req,true);client.send();}
+ 
+ function filtrar(){
+  xx=filtro.value;
+  sa=arq; sb=''; pg='';
+  while(sa.indexOf('\r')>=0){
+   sb=sa.substring(0,sa.indexOf('\r'));
+   sa=sa.substring(sa.indexOf('\r')+1);
+   time=sb.substring(0,sb.indexOf(' '));
+   dados=sb.substring(sb.indexOf(' ')+1);
+   if(dados.indexOf('Ver: ')==0) dados='<b>'+dados+'</b>';
+   if(dados.indexOf('Versao ')==0) dados='<b>'+dados+'</b>';
+   //time++;time--; time*=1000; var d=new Date(time); if((dados.indexOf(xx)==0)||(xx=='')){  pg+=d.toLocaleString()+' '+dados+'<br>';   }
+   if((dados.indexOf(xx)>=0)||(xx=='')) pg+=time+' '+dados+'<br>';
+  }
+  div01.innerHTML=pg;
+ }
+ 
+ function iniciar(){
+  sa=location.href;
+	if(sa.indexOf('url=')>0){
+		sa=sa.substring(sa.indexOf('url=')+4);
+		span01.innerHTML=sa.substring(4);
+		client.open('GET', '/'+sa, true); client.send();
+	}else{
+        var d = new Date(); fn="log/";
+        sa=d.getFullYear()+""; sa=sa.substring(2,4); fn+=sa;
+        sa=d.getMonth() + 1001; sa+=""; sa=sa.substring(2,4); fn+=sa;
+        sa=d.getDate() + 1000; sa+=""; sa=sa.substring(2,4); fn+=sa+".txt";
+		//client.open('GET',fn,true);client.send();
+		client.open('GET',req,true);client.send();
+	}
+ }
+ 
+</script>
+</body>
+</html>

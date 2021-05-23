@@ -1,0 +1,94 @@
+<!--log.htm-->
+<html>
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+	<style>
+		bodyX{background:black;color:silver;}
+	</style>
+</head>
+<body onload="iniciar();">
+
+  <div align=center>
+    <table>
+		<tr><td id="data" style="text-align:center;"></td></tr>
+		<tr><td>
+      <pre id="log_recent" style="margin:2px 2px 0 2px;"></pre>
+      <pre id="datahora" style="margin:0 2px 4px 2px;">&nbsp;</pre>
+    </td></tr></table>
+    <input type=button value=Voltar onclick=history.go(-1);>
+  </div>
+  
+<script>
+var loaded=true;
+var req="js?fields=DeviceID,time";
+
+function iniciar(){
+	sto=setInterval(loadjs2,1000);
+}
+
+function loadjs2(){
+	if(loaded){
+		client2.open('GET',req,true);
+		client2.send();
+		loaded=false;
+	}
+}
+
+var fn="";
+
+var client2=new XMLHttpRequest();
+client2.onreadystatechange=function(){
+	if(this.readyState==4){
+		if(req==fn){
+			sa=this.responseText; sa=sa.split(" Versao ").join(" <b>Versao</b> ");
+			log_recent.innerHTML=sa;
+			req="js?fields=time,log_recent";
+			setTimeout(scrollWin,200);
+		}
+		else
+		if (this.status==200){
+			myObj=JSON.parse(this.responseText);
+			if(typeof myObj.time!='undefined'){
+				ti=myObj.time; ti*=1000;
+				var d=new Date(ti);
+				if(typeof myObj.DeviceID!='undefined'){
+					fn="log/";
+					sa=d.getUTCFullYear()+""; sa=sa.substring(2,4); fn+=sa;
+					sa=d.getUTCMonth() + 1001; sa+=""; sa=sa.substring(2,4); fn+=sa;
+					sa=d.getUTCDate() + 1000; sa+=""; sa=sa.substring(2,4); fn+=sa+".txt";
+					req=fn;
+				}
+				ano=d.getUTCFullYear();
+				me=d.getUTCMonth()+1; me="0"+me; me=me.substring(me.length-2);
+				dia=d.getUTCDate(); dia="0"+dia; dia=dia.substring(dia.length-2);
+				data.innerHTML=dia+"-"+me+"-"+ano;
+				ho="0"+d.getUTCHours(); ho=ho.substring(ho.length-2);
+				mi='0'+d.getUTCMinutes(); mi=mi.substring(mi.length-2);
+				se='0'+d.getUTCSeconds(); se=se.substring(se.length-2);
+				datahora.innerHTML=ho+":"+mi+":"+se;
+			}
+			if(typeof myObj.log_recent!='undefined'){
+			  sa=myObj.log_recent; sa=sa.split(" Versao ").join(" <b>Versao</b> ");
+			  while(sa.indexOf(";;")>=0){
+				sb=sa.substring(0,sa.indexOf(";;"))+"\n";
+				sa=sa.substring(sa.indexOf(";;")+2);
+				//console.log(sb);
+				if(log_recent.innerHTML.indexOf(sb)<0){
+				  log_recent.innerHTML+=sb;
+				  sto2=setTimeout(scrollWin,200);
+				} 
+			  }
+			}
+		}
+	loaded=true;
+	}
+}
+
+function scrollWin(){window.scrollBy(0,200000);}
+
+</script>
+
+</body>
+</html>
+

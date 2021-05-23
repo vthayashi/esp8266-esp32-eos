@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<!-- config.htm v1.0.1 210411 -->
+<html>
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <title></title>
+  <style>
+    body {margin:0;background-color:black;color:white;font:16px arial;}
+    hr{border:none; border-top: 1px dashed #333333;margin:0;}
+    a{text-decoration:none;}
+    input,select{font:18px arial;padding:4px;border-radius:6px;text-align:center;border:solid 1px gray;padding:4px 6px 4px 6px;}
+    select{width:252px;}
+    input[type=text],input[type=password]{width:238px;}
+    input[type=button]{min-width:60px;height:30px;}
+    span{text-align:center;}
+    h2{margin:12px 4px 4px 4px;}
+    td{font:16px arial;padding:2px;}
+    .btn0{border-radius:4px;background:black;color:gray;border:solid 1px #333333;}
+	a{text-decoration:none;color:silver;cursor:pointer;}
+	.divbl{border:solid 1px #333333;border-radius:4px;margin:4px;padding:6px;width:338px;}
+  </style>
+<script type="text/javascript">
+
+var loaded=true;
+var req="&list=/&fields=homePage,DeviceID,Versao,essid,epass,ipMode,PCB,apPass,localIP,apIP,APmode";
+	req+=",timeNTP_interval,ntpServer,blynkAuth,autoReset,tft_mode,tm1_cr,time";
+	req+=",MQTT_BROKER,MQTT_PORT,MQTT_ID";
+var req2="";
+
+function onBodyLoad(){ //wait_table
+  loadjs(); sto=setInterval(loadjs,1000);
+  setTimeout(function(){div_wait.style.visibility="hidden";},1500);
+}
+
+function loadjs(){
+  if(loaded){
+	sa=req; if(req2.length>0){ sa=req2; req2=""; }
+	if(sa.length>0){
+		if(sa.startsWith("&")) sa="/js?"+sa.substring(1);
+		client.open('GET',sa,true); client.send();
+		loaded=false;
+	}
+  }
+}
+
+  </script>
+</head>
+
+<body id="index" onload="onBodyLoad()">
+
+<table id="div_wait" cellspacing=0 style="position:fixed;width:100%;height:100%;left:0;top:0;visibility:visible;z-index:1000;">
+	<tr><td id="wait_table_td" style="height:80%;text-align:center;color:red;background:black;">wait...</td></tr>
+</table>
+
+<div align=center>
+
+<div class='divbl' align=center style='padding:2px;width:346px;margin:3px 0 0 0;'>
+  <table width=100% border=0 cellpadding=0 cellspacing=0>
+    <tr>
+      <td width=12% style="padding:0;"><input type=button class=btn0 onclick='history.go(-1);' value='<' style="min-width:42px;height:28px;"></td>
+      <td width=76% align=center id=datahora onclick="sendTime();" title="Send Time" style="cursor:pointer;font:16px arial;">&nbsp;</td>
+      <td width=12%></td>
+    </tr>
+  </table>
+</div>
+    
+<div style="height:4px;"></div>
+
+<table width=350 border='0' cellspacing='2' cellpadding='0'>
+
+	<tr>
+		<td colspan=2 align=center>
+			<a href="log.htm">Log</a> - <a href="arquivos.htm">Arquivos</a> - <a href="edit.htm">Edit</a> -
+			<a href="update">Update</a> - 
+			<a onclick="if(confirm('Reiniciar?')){req2='/reset';}">Reset</a>
+		</td>
+	</tr>
+
+	<tr><td colspan=2 style="height:4px;"><hr></td></tr>
+
+  <tr><td>localIP</td><td><span id="localIP"></span></td></tr>
+  <tr><td>apIP</td><td><a id="apIP2" href="http://192.168.4.1">http://192.168.4.1</a></td></tr>
+
+	<tr><td colspan=2 style="height:4px;"><hr></td></tr>
+	
+	<tr><td>homePage</td>
+		<td>
+			<select id="homePage" name="homePage" onchange="req2+='&homePage='+this.value">
+				<option value="">---</option>
+			</select>
+	</td></tr>
+
+<tr><td colspan=2 style="height:4px;"><hr></td></tr>
+
+	<tr><td>essid</td><td><input type=text id="essid" name="essid"></td></tr>
+	<tr><td>epass</td><td><input type=text id="epass" name="epass"></td></tr>
+	
+    <tr>
+		<td>ipMode</td>
+		<td>
+		  <select id="ipMode" name="ipMode" style='padding:4px 6px 4px 86px;'>
+		  <option value="0">DHCP</option>
+		  <script> for(i=2;i<255;i++){ document.writeln('<option value="'+i+'">'+i+'</option>'); } </script>
+		  </select>
+		</td>
+	</tr>
+	
+    <tr><td width=90>DeviceID</td><td><input type=text id="DeviceID" name="DeviceID"></td></tr>
+    <tr><td>apPass</td><td><input type=text id="apPass" name="apPass"></td></tr>
+		<tr><td colspan=2 style="text-align:center;">
+			<a href="wifi.htm"><input type="button" value="WiFi"></a>
+			<input type="button" value=" Salvar e Reiniciar "
+				onclick="req2='&essid='+essid.value+'&epass='+epass.value+'&ipMode='+ipMode.value+'&DeviceID='+DeviceID.value+'&apPass='+apPass.value;">
+		</td></tr>
+	
+	<tr><td colspan=2 style="height:8px;"><hr style="margin:0;"></td></tr>
+	
+    <tr><td>APmode</td><td>
+		<select id="APmode" name="APmode" style='padding:4px 6px 4px 50px;' disabled onchange="req2+='&APmode='+this.value">
+			<option value="0">Sempre Ligado</option><option value="1">Auto 1 minuto</option><option value="2">Auto 2 minutos</option>
+			<option value="5">Auto 5 minutos</option><option value='10'>Auto 10 minutos</option> </select>
+	</td></tr>
+    
+	<tr><td width=90>time NTP Interval</td><td>
+		<select id="timeNTP_interval" name="timeNTP_interval" style='padding:8px;text-align-last:center;' disabled onchange="req2+='&timeNTP_interval='+this.value">
+			<option value="0">Desativado</option>
+			<option value="60">1 Hora</option>
+			<option value="120">2 Horas</option>
+			<option value="240">4 Horas</option>
+			<option value='480'>8 Horas</option>
+		</select>
+	</td></tr>
+    
+	<tr><td width=90>ntpServer0</td><td><input type=text id="ntpServer0" name="ntpServer0" onchange="req2+='&ntpServer0='+this.value"></td></tr>
+    <tr><td width=90>ntpServer1</td><td><input type=text id="ntpServer1" name="ntpServer1" onchange="req2+='&ntpServer1='+this.value"></td></tr>
+    <tr><td width=90>ntpServer2</td><td><input type=text id="ntpServer2" name="ntpServer2" onchange="req2+='&ntpServer2='+this.value"></td></tr>
+    
+    <tr><td colspan=2 style="height:8px;"><hr style="margin:0;"></td></tr>
+
+	<tr>
+		<td>autoReset</td>
+		<td><select id='autoReset' onchange='autoReset_onchange();' style="height:30px;padding:0 0 0 40px;" disabled><option value='-1'>Desativado</option>
+		<option value='3600'>intervalo 1 hora</option> <option value='21600'>intervalo 6 horas</option>
+		<option value='43200'>intervalo 12 horas</option> <option value='86400'>intervalo 1 dia</option>
+		<option value='172800'>intervalo 2 dias</option> <option value='604800'>intervalo 7 dias</option>
+		<script>for(i=0;i<24;i++) document.writeln("<option value='"+i+"'>as "+i+":00</option>");</script>
+		</select>
+		<script> function autoReset_onchange(){ ser+='autoReset='+autoReset.value+'&fields=autoReset'; } </script>
+	</td><tr>
+
+  </table>
+ 
+ <hr style="margin:0;width:342px;">
+ 
+<style>
+	.mis{margin:0;}
+	button{height:30px;font:18px arial;padding:0 12px 0 12px;border-radius:4px;border:solid 1px #333333;background:black;color:silver;}
+</style>
+ <table style="margin:4px 0 4px 0;">
+ <tr><td colspan=2 align=center>MQTT</td></tr>
+ <tr><td>Broker</td><td><input type=text class=mis id=MQTT_BROKER name=MQTT_BROKER></td></tr>
+ <tr><td>Port</td>  <td><input type=text class=mis id=MQTT_PORT name=MQTT_PORT></td></tr>
+ <tr><td>ID</td>    <td><input type=text class=mis id=MQTT_ID name=MQTT_ID></td></tr>
+ <tr><td colspan=2 align=center><button onclick="mqtt_save();">Salvar e Reiniciar</button></td></tr>
+ </table>
+ <script>
+ function mqtt_save(){
+	req2+="&MQTT_BROKER="+MQTT_BROKER.value;
+	req2+="&MQTT_PORT="+MQTT_PORT.value;
+	req2+="&MQTT_ID="+MQTT_ID.value;
+ }
+ </script>
+
+ 
+ <hr style="margin:0;width:342px;">
+ 
+<div id="Versao" style="font:14px arial;color:silver;"></div>
+<div id="PCB" style="font:14px arial;color:silver;"></div>
+
+<br>
+</div>
+
+<script>
+
+var client=new XMLHttpRequest();
+client.onreadystatechange=function(){
+	if(this.readyState==4){
+		if (this.status==200){
+			if(this.responseText.startsWith("{")){
+				myObj=JSON.parse(this.responseText);
+				if(typeof myObj.time!='undefined'){
+					ti=myObj.time; ti*=1000; var d=new Date(ti);
+					ano=d.getUTCFullYear();
+					me=d.getUTCMonth()+1; me="0"+me; me=me.substring(me.length-2);
+					dia=d.getUTCDate(); dia="0"+dia; dia=dia.substring(dia.length-2);
+					ho="0"+d.getUTCHours(); ho=ho.substring(ho.length-2);
+					mi='0'+d.getUTCMinutes(); mi=mi.substring(mi.length-2);
+					se='0'+d.getUTCSeconds(); se=se.substring(se.length-2);
+					datahora.innerHTML=dia+"/"+me+"/"+ano+" "+ho+":"+mi+":"+se;
+				}
+				if(typeof myObj.DeviceID!='undefined'){
+					DeviceID.value=myObj.DeviceID;
+					req="&fields=time";
+				}
+				if(typeof myObj.apPass!='undefined'){apPass.value=myObj.apPass;}
+				if(typeof myObj.essid!='undefined'){essid.value=myObj.essid;}
+				if(typeof myObj.epass!='undefined'){epass.value=myObj.epass;}
+				if(typeof myObj.localIP!='undefined'){localIP.innerHTML='<a href="http://'+myObj.localIP+'">http://'+myObj.localIP+'</a>';}
+				if(typeof myObj.APmode!='undefined'){APmode.value=myObj.APmode; APmode.disabled=false;}
+				if(typeof myObj.ipMode!='undefined'){ipMode.value=myObj.ipMode;}
+				//
+				if(typeof myObj.timeNTP_interval!='undefined'){ timeNTP_interval.value=myObj.timeNTP_interval; timeNTP_interval.disabled=false; }
+				if(typeof myObj.ntpServer!='undefined'){ ntpServer0.value=myObj.ntpServer[0]; ntpServer1.value=myObj.ntpServer[1]; ntpServer2.value=myObj.ntpServer[2]; }
+				//
+				if(typeof myObj.autoReset!='undefined'){ autoReset.value=myObj.autoReset; autoReset.disabled=false;}
+				if(typeof myObj.Versao!='undefined'){Versao.innerHTML="Versao: "+myObj.Versao+".ino"; }
+				if(typeof myObj.PCB!='undefined'){ PCB.innerHTML="PCB: "+myObj.PCB+".fzz"; }
+				if(typeof myObj.list!='undefined'){
+					myObj.list.sort();
+					for(i in myObj.list){
+						myObj.list[i]=myObj.list[i].split(" ");
+						if(myObj.list[i][0].indexOf(".htm")>0){
+							option=document.createElement("option");
+							option.text=myObj.list[i][0];
+							homePage.add(option);
+						}
+					}
+				}
+				if(typeof myObj.homePage!='undefined'){ homePage.value=myObj.homePage; }
+				if(typeof myObj.MQTT_BROKER!='undefined'){ MQTT_BROKER.value=myObj.MQTT_BROKER; }
+				if(typeof myObj.MQTT_PORT!='undefined'){ MQTT_PORT.value=myObj.MQTT_PORT; }
+				if(typeof myObj.MQTT_ID!='undefined'){ MQTT_ID.value=myObj.MQTT_ID; }
+			}else{
+				rst=false;
+				if(this.responseText.indexOf("history.go(-2);")>=0) rst=true;
+				if(this.responseText.indexOf("<body>Reset...</body>")>=0) rst=true;
+				if(rst){
+					wait_table_td.innerHTML="Reiniciando";
+					div_wait.style.visibility="visible";
+					req="";
+					//setTimeout(function(){location.reload();},5000);
+					setTimeout(function(){location.href="/";},5000);
+				}
+			}
+		}
+	loaded=true;
+	}
+}
+
+function sendTime(){d=new Date();req2="&time="+d.getTime();}
+
+</script>
+</body>
+</html>
