@@ -1,6 +1,6 @@
 
 /*  eos_lib.h         1.1.2
-    Arduino           1.8.4
+    Arduino           14
     ESP32             1.0.6   https://github.com/espressif/arduino-esp32  https://dl.espressif.com/dl/package_esp32_index.json 
     ESP8266           2.7.4   https://github.com/esp8266/Arduino          http://arduino.esp8266.com/stable/package_esp8266com_index.json 
     TimeLib.h         1.6     by Michael Margolis   https://github.com/PaulStoffregen/Time
